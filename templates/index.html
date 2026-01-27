@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Educational Assessment Platform</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>Assessment Question</h2>
+        <p id="question">{{ question }}</p>
+
+        <input type="text" id="answerInput" placeholder="Enter your answer (single word)">
+        <button onclick="submitAnswer()">Submit</button>
+
+        <div id="feedback"></div>
+        
+    </div>
+</div>
+
+<div id="chat-panel">
+    <div id="chat-header">
+        AI Assistant
+        <button id="clear-chat" onclick="clearChat()">Clear</button>
+    </div>
+
+    <div id="chat-messages"></div>
+
+    <input type="text" id="chatInput" placeholder="Ask for a hint...">
+    <button onclick="sendChat()">Send</button>
+</div>
+<!-- Chatbot -->
+<div id="chatbot-icon" onclick="toggleChat()">💬</div>
+
+<div id="chat-panel">
+    <div id="chat-header">AI Assistant</div>
+    <div id="chat-messages"></div>
+    <input type="text" id="chatInput" placeholder="Ask for a hint...">
+    <button onclick="sendChat()">Send</button>
+</div>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
