@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dhruv Learning Platform</title>
+    <link rel="stylesheet" href="/static/style.css">
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="logo">EduBot Site</div>
+        <ul class="nav-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#questions">Questions</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="#social">Social Media</a></li>
+        </ul>
+    </nav>
+
+    <div class="container-wrapper">
+        {% block content %}{% endblock %}
+    </div>
+
+    <div id="chatbot-icon" onclick="toggleChat()">💬</div>
+
+    <div id="chat-panel">
+        <div id="chat-header">
+            AI Assistant
+            <button id="clear-chat" onclick="clearChat()">Clear</button>
+        </div>
+        <div id="chat-messages"></div>
+        <input type="text" id="chatInput" placeholder="Ask for a hint..." onkeypress="handleKeyPress(event)">
+        <button onclick="sendChat()">Send</button>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+
+</html>

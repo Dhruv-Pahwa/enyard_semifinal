@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Assessment Question</h2>
+    <p id="question">{{ question }}</p>
+
+    <input type="text" id="answerInput" placeholder="Enter your answer (single word)">
+    <button onclick="submitAnswer()">Submit</button>
+
+    <div id="feedback"></div>
+</div>
+{% endblock %}

@@ -1,46 +1,75 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Educational Assessment Platform</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
+{% extends "layout.html" %}
 
-<div class="container">
+{% block content %}
+<section id="home" class="page-section">
+    <div class="card intro-card">
+        <h1>Welcome to Dhruv Learning Platform</h1>
+        <p>This is a dummy website designed to demonstrate an integrated AI chatbot.</p>
+        <p>Scroll down to explore About Us, Questions, and more!</p>
+    </div>
+</section>
+
+<section id="about" class="page-section">
+    <div class="card intro-card">
+        <h1>About Us</h1>
+        <p>We are dedicated to creating interactive educational experiences.</p>
+        <p>This platform uses authorized Google Gemini models to assist students without giving away answers.</p>
+        <p>Our mission is to make learning engaging and interactive.</p>
+    </div>
+</section>
+
+<section id="questions" class="page-section">
     <div class="card">
         <h2>Assessment Question</h2>
-        <p id="question">{{ question }}</p>
 
-        <input type="text" id="answerInput" placeholder="Enter your answer (single word)">
-        <button onclick="submitAnswer()">Submit</button>
+        <div id="start-view" style="text-align: center;">
+            <p>Ready to solve??</p>
+            <button onclick="startChallenge()">Start Challenge</button>
+        </div>
 
-        <div id="feedback"></div>
-        
+        <div id="question-view" style="display: none;">
+            <p id="question">{{ question }}</p>
+
+            <input type="text" id="answerInput" placeholder="Enter your answer (single word)">
+            <button onclick="submitAnswer()">Submit</button>
+
+            <button class="secondary-btn" onclick="restartChallenge()"
+                style="background: #6c757d; margin-top: 20px;">Restart Assessment</button>
+
+            <div id="feedback"></div>
+        </div>
+
+        <div id="completion-view" style="display: none; text-align: center;">
+            <h3 style="color: green;">All questions completed!</h3>
+            <p>Great job completing the assessment.</p>
+            <button onclick="restartChallenge()">Restart Assessment</button>
+        </div>
+
     </div>
-</div>
+</section>
 
-<div id="chat-panel">
-    <div id="chat-header">
-        AI Assistant
-        <button id="clear-chat" onclick="clearChat()">Clear</button>
+<section id="contact" class="page-section">
+    <div class="card intro-card">
+        <h1>Contact Us</h1>
+        <form onsubmit="event.preventDefault(); alert('Message sent (dummy)!');">
+            <input type="text" placeholder="Your Name" style="margin-bottom: 10px;">
+            <input type="email" placeholder="Your Email" style="margin-bottom: 10px;">
+            <textarea placeholder="Your Message" rows="4"
+                style="width: 100%; padding: 10px; margin-bottom: 10px;"></textarea>
+            <button>Send Message</button>
+        </form>
     </div>
+</section>
 
-    <div id="chat-messages"></div>
-
-    <input type="text" id="chatInput" placeholder="Ask for a hint...">
-    <button onclick="sendChat()">Send</button>
-</div>
-<!-- Chatbot -->
-<div id="chatbot-icon" onclick="toggleChat()">💬</div>
-
-<div id="chat-panel">
-    <div id="chat-header">AI Assistant</div>
-    <div id="chat-messages"></div>
-    <input type="text" id="chatInput" placeholder="Ask for a hint...">
-    <button onclick="sendChat()">Send</button>
-</div>
-
-<script src="/static/script.js"></script>
-</body>
-</html>
+<section id="social" class="page-section">
+    <div class="card intro-card">
+        <h1>Social Media</h1>
+        <div class="social-links">
+            <a href="#" class="social-icon">Twitter</a>
+            <a href="#" class="social-icon">LinkedIn</a>
+            <a href="#" class="social-icon">GitHub</a>
+            <a href="#" class="social-icon">Instagram</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

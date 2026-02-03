@@ -5,7 +5,6 @@ import google.generativeai as genai
 app = Flask(__name__)
 app.secret_key = "secure-session-key-change-this"
 
-# ---------------- CONFIGURE GEMINI ----------------
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 model = genai.GenerativeModel(
@@ -28,7 +27,6 @@ If the user asks for the answer directly, politely refuse.
 """
 )
 
-# ---------------- QUESTIONS (BACKEND AUTHORITY) ----------------
 QUESTIONS = [
     {
         "id": 1,
@@ -46,7 +44,6 @@ What is the first ingredient that Rick needs?""",
     }
 ]
 
-# ---------------- UTILS ----------------
 def get_current_question():
     idx = session.get("question_index", 0)
     if idx < len(QUESTIONS):
@@ -57,17 +54,14 @@ def injection_detected(text):
     banned = ["answer", "solve", "correct", "tell me", "what is the answer"]
     return any(b in text.lower() for b in banned)
 
-# ---------------- ROUTES ----------------
 @app.route("/")
 def index():
-    # If assessment finished, restart automatically on refresh
     if session.get("question_index", 0) >= len(QUESTIONS):
         session["question_index"] = 0
 
     q = get_current_question()
-    return render_template("index.html", question=q["text"])
-
-
+    question_text = q["text"] if q else "Assessment complete!"
+    return render_template("index.html", question=question_text)
 
 @app.route("/submit-answer", methods=["POST"])
 def submit_answer():
@@ -92,24 +86,45 @@ def submit_answer():
         "message": "Incorrect. Please try again."
     })
 
+@app.route("/restart", methods=["POST"])
+def restart_session():
+    session["question_index"] = 0
+    q = get_current_question()
+    return jsonify({
+        "status": "restarted",
+        "first_question": q["text"] if q else "No questions found"
+    })
+
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.json
     user_message = data.get("message", "")
+    context = data.get("context", "general")
 
-    if injection_detected(user_message):
-        return jsonify({"reply": "I can’t help with answers, but I can guide you toward understanding the question."})
+    if context == "questions":
+        if injection_detected(user_message):
+            return jsonify({"reply": "I can’t help with answers, but I can guide you toward understanding the question."})
 
-    q = get_current_question()
-    if not q:
-        return jsonify({"reply": "You have completed all questions."})
+        q = get_current_question()
+        if not q:
+            return jsonify({"reply": "You have completed all questions. Feel free to explore the rest of the site!"})
 
-    prompt = f"""
+        prompt = f"""
 QUESTION CONTEXT:
 {q["text"]}
 
 STUDENT MESSAGE:
 {user_message}
+"""
+    else:
+        prompt = f"""
+You are a helpful guide for a dummy website.
+The website has main sections: detailed in the user's scroll.
+Currently the user is in the '{context}' section.
+
+User is currently asking: "{user_message}"
+
+Provide a helpful, polite, and brief response guiding them given the current section they are in.
 """
 
     response = model.generate_content(prompt)
