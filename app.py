@@ -101,6 +101,12 @@ def chat():
     user_message = data.get("message", "")
     context = data.get("context", "general")
 
+    navigation_instruction = """
+If the user explicitly asks to go, navigate, or move to a specific section, your response must be EXACTLY: "NAVIGATE: <section_id>".
+Sections are: #home, #about, #questions, #contact, #social.
+Example: "NAVIGATE: #questions"
+"""
+
     if context == "questions":
         if injection_detected(user_message):
             return jsonify({"reply": "I can’t help with answers, but I can guide you toward understanding the question."})
@@ -110,6 +116,8 @@ def chat():
             return jsonify({"reply": "You have completed all questions. Feel free to explore the rest of the site!"})
 
         prompt = f"""
+{navigation_instruction}
+Otherwise, use the following context.
 QUESTION CONTEXT:
 {q["text"]}
 
@@ -118,7 +126,8 @@ STUDENT MESSAGE:
 """
     else:
         prompt = f"""
-You are a helpful guide for a dummy website.
+{navigation_instruction}
+Otherwise, you are a helpful guide for a dummy website.
 The website has main sections: detailed in the user's scroll.
 Currently the user is in the '{context}' section.
 

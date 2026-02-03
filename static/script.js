@@ -120,7 +120,19 @@ function sendChat() {
     })
         .then(res => res.json())
         .then(data => {
-            messages.innerHTML += `<div><b>AI:</b> ${data.reply}</div>`;
+            const reply = data.reply.trim();
+            if (reply.startsWith("NAVIGATE:")) {
+                const sectionId = reply.split(":")[1].trim();
+                const section = document.querySelector(sectionId);
+                if (section) {
+                    messages.innerHTML += `<div><b>AI:</b> Navigating to section...</div>`;
+                    section.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    messages.innerHTML += `<div><b>AI:</b> I couldn't find that section.</div>`;
+                }
+            } else {
+                messages.innerHTML += `<div><b>AI:</b> ${reply}</div>`;
+            }
             messages.scrollTop = messages.scrollHeight;
         });
 
