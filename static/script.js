@@ -27,8 +27,11 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function startChallenge() {
-    document.getElementById("start-view").style.display = "none";
-    document.getElementById("question-view").style.display = "block";
+    fetch("/start-assessment", { method: "POST" })
+        .then(() => {
+            document.getElementById("start-view").style.display = "none";
+            document.getElementById("question-view").style.display = "block";
+        });
 }
 
 function restartChallenge() {
@@ -111,6 +114,10 @@ function sendChat() {
     const messages = document.getElementById("chat-messages");
     messages.innerHTML += `<div><b>You:</b> ${msg}</div>`;
 
+    // Show typing indicator
+    showTypingIndicator();
+    messages.scrollTop = messages.scrollHeight;
+
     console.log("Sending chat with context:", currentContext);
 
     fetch("/chat", {
@@ -120,6 +127,9 @@ function sendChat() {
     })
         .then(res => res.json())
         .then(data => {
+            // Remove typing indicator
+            removeTypingIndicator();
+
             const reply = data.reply.trim();
             if (reply.startsWith("NAVIGATE:")) {
                 const sectionId = reply.split(":")[1].trim();
@@ -134,7 +144,47 @@ function sendChat() {
                 messages.innerHTML += `<div><b>AI:</b> ${reply}</div>`;
             }
             messages.scrollTop = messages.scrollHeight;
+        })
+        .catch(err => {
+            removeTypingIndicator();
+            console.error("Error:", err);
+            messages.innerHTML += `<div><b>AI:</b> Sorry, something went wrong.</div>`;
         });
 
     input.value = "";
+    updateCharCount();
+}
+
+function showTypingIndicator() {
+    const messages = document.getElementById("chat-messages");
+    const indicatorId = "typing-indicator";
+
+    // Check if already exists
+    if (!document.getElementById(indicatorId)) {
+        const indicator = document.createElement("div");
+        indicator.id = indicatorId;
+        indicator.className = "typing-indicator";
+        indicator.innerHTML = "<span></span><span></span><span></span>";
+        messages.appendChild(indicator);
+    }
+}
+
+function removeTypingIndicator() {
+    const indicator = document.getElementById("typing-indicator");
+    if (indicator) {
+        indicator.remove();
+    }
+}
+
+const chatInput = document.getElementById("chatInput");
+if (chatInput) {
+    chatInput.addEventListener("input", updateCharCount);
+}
+
+function updateCharCount() {
+    const input = document.getElementById("chatInput");
+    const countDiv = document.getElementById("char-count");
+    if (input && countDiv) {
+        countDiv.innerText = `${input.value.length}/200`;
+    }
 }

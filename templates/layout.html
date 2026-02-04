@@ -11,7 +11,7 @@
 <body>
 
     <nav class="navbar">
-        <div class="logo">EduBot Site</div>
+        <div class="logo">Dhruv Site</div>
         <ul class="nav-links">
             <li><a href="#home">Home</a></li>
             <li><a href="#about">About</a></li>
@@ -35,7 +35,9 @@
             <button id="clear-chat" onclick="clearChat()">Clear</button>
         </div>
         <div id="chat-messages"></div>
-        <input type="text" id="chatInput" placeholder="Ask for a hint..." onkeypress="handleKeyPress(event)">
+        <div id="char-count">0/200</div>
+        <input type="text" id="chatInput" placeholder="Ask for a hint..." maxlength="200"
+            onkeypress="handleKeyPress(event)">
         <button onclick="sendChat()">Send</button>
     </div>
 

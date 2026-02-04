@@ -89,11 +89,17 @@ def submit_answer():
 @app.route("/restart", methods=["POST"])
 def restart_session():
     session["question_index"] = 0
+    session["assessment_started"] = False
     q = get_current_question()
     return jsonify({
         "status": "restarted",
         "first_question": q["text"] if q else "No questions found"
     })
+
+@app.route("/start-assessment", methods=["POST"])
+def start_assessment():
+    session["assessment_started"] = True
+    return jsonify({"status": "started"})
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -101,11 +107,16 @@ def chat():
     user_message = data.get("message", "")
     context = data.get("context", "general")
 
+    if len(user_message) > 200:
+        return jsonify({"reply": "Message too long. Please keep it under 200 characters."})
+
     navigation_instruction = """
 If the user explicitly asks to go, navigate, or move to a specific section, your response must be EXACTLY: "NAVIGATE: <section_id>".
 Sections are: #home, #about, #questions, #contact, #social.
 Example: "NAVIGATE: #questions"
 """
+
+    assessment_started = session.get("assessment_started", False)
 
     if context == "questions":
         if injection_detected(user_message):
@@ -118,6 +129,13 @@ Example: "NAVIGATE: #questions"
         prompt = f"""
 {navigation_instruction}
 Otherwise, use the following context.
+STRICT INSTRUCTION 1: Check if the STUDENT MESSAGE is gibberish (random characters, no meaning). If it is, IGNORE everything else and reply ONLY with: "That looks like gibberish. Could you please rephrase?"
+
+STRICT INSTRUCTION 2: Assessment Started Status: {assessment_started}.
+If "Assessment Started Status" is False:
+- If the student asks about the question, ingredients, or the challenge, reply EXACTLY: "Please click 'Start Challenge' on the screen to begin the assessment before asking questions."
+- If the student asks about navigation (e.g., "go to home") or general site info, ANSWER normally.
+
 QUESTION CONTEXT:
 {q["text"]}
 
@@ -128,6 +146,8 @@ STUDENT MESSAGE:
         prompt = f"""
 {navigation_instruction}
 Otherwise, you are a helpful guide for a dummy website.
+STRICT INSTRUCTION: Check if the user query is gibberish. If it is, reply with: "That looks like gibberish. Could you please rephrase?"
+
 The website has main sections: detailed in the user's scroll.
 Currently the user is in the '{context}' section.
 
