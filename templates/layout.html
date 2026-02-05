@@ -34,7 +34,22 @@
             AI Assistant
             <button id="clear-chat" onclick="clearChat()">Clear</button>
         </div>
-        <div id="chat-messages"></div>
+        <div id="chat-messages">
+            <div id="welcome-card" class="welcome-card">
+                <h3>Hello!</h3>
+                <p>I am Echo! Your AI tutor. With my help you will:</p>
+                <ul class="welcome-features">
+                    <li><span class="icon">✨</span> Get real-time insights and suggestions from your actions on virtual machines.</li>
+                    <li><span class="icon">⏱️</span> Boost your learning speed and efficiency.</li>
+                    <li><span class="icon">💡</span> Get a better understanding of room concepts and tasks.</li>
+                </ul>
+                <p class="welcome-footer">Stuck or want to chat? Let me know!</p>
+                <div class="welcome-buttons">
+                    <button class="quick-btn" onclick="sendQuickMessage('I\'m stuck')">→ I'm stuck</button>
+                    <button class="quick-btn secondary" onclick="sendQuickMessage('Tell me more about yourself')">? Learn more about me</button>
+                </div>
+            </div>
+        </div>
         <div id="char-count">0/200</div>
         <input type="text" id="chatInput" placeholder="Ask for a hint..." maxlength="200"
             onkeypress="handleKeyPress(event)">

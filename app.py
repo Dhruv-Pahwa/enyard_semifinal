@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, jsonify, session
 import os
 import google.generativeai as genai
 
+import json
+import re
+
 app = Flask(__name__)
 app.secret_key = "secure-session-key-change-this"
 
@@ -108,33 +111,44 @@ def chat():
     context = data.get("context", "general")
 
     if len(user_message) > 200:
-        return jsonify({"reply": "Message too long. Please keep it under 200 characters."})
+        return jsonify({"reply": "Message too long. Please keep it under 200 characters.", "navigation": None})
 
     navigation_instruction = """
-If the user explicitly asks to go, navigate, or move to a specific section, your response must be EXACTLY: "NAVIGATE: <section_id>".
+If the user explicitly asks to go, navigate, or move to a specific section, you must include a "navigation" key in your JSON response.
 Sections are: #home, #about, #questions, #contact, #social.
-Example: "NAVIGATE: #questions"
+
+IMPORTANT: You must ALWAYS respond in valid JSON format.
+Your JSON must have TWO keys:
+1. "reply": The text response to the user.
+2. "navigation": The section ID string (e.g., "#home") if navigation is needed, or null if not.
+
+Example 1 (Navigation + help):
+{"reply": "Sure, I can take you to the questions section. Here we are!", "navigation": "#questions"}
+
+Example 2 (Just chat):
+{"reply": "This site helps you learn about web security.", "navigation": null}
 """
 
     assessment_started = session.get("assessment_started", False)
 
     if context == "questions":
         if injection_detected(user_message):
-            return jsonify({"reply": "I can’t help with answers, but I can guide you toward understanding the question."})
+            return jsonify({"reply": "I can’t help with answers, but I can guide you toward understanding the question.", "navigation": None})
 
         q = get_current_question()
         if not q:
-            return jsonify({"reply": "You have completed all questions. Feel free to explore the rest of the site!"})
+            return jsonify({"reply": "You have completed all questions. Feel free to explore the rest of the site!", "navigation": None})
 
         prompt = f"""
 {navigation_instruction}
+
 Otherwise, use the following context.
-STRICT INSTRUCTION 1: Check if the STUDENT MESSAGE is gibberish (random characters, no meaning). If it is, IGNORE everything else and reply ONLY with: "That looks like gibberish. Could you please rephrase?"
+STRICT INSTRUCTION 1: Check if the STUDENT MESSAGE is gibberish (random characters, no meaning). If it is, IGNORE everything else and reply with JSON: {{"reply": "That looks like gibberish. Could you please rephrase?", "navigation": null}}
 
 STRICT INSTRUCTION 2: Assessment Started Status: {assessment_started}.
 If "Assessment Started Status" is False:
-- If the student asks about the question, ingredients, or the challenge, reply EXACTLY: "Please click 'Start Challenge' on the screen to begin the assessment before asking questions."
-- If the student asks about navigation (e.g., "go to home") or general site info, ANSWER normally.
+- If the student asks about the question, ingredients, or the challenge, reply with JSON: {{"reply": "Please click 'Start Challenge' on the screen to begin the assessment before asking questions.", "navigation": null}}
+- If the student asks about navigation (e.g., "go to home") or general site info, ANSWER normally using the JSON format.
 
 QUESTION CONTEXT:
 {q["text"]}
@@ -145,8 +159,9 @@ STUDENT MESSAGE:
     else:
         prompt = f"""
 {navigation_instruction}
+
 Otherwise, you are a helpful guide for a dummy website.
-STRICT INSTRUCTION: Check if the user query is gibberish. If it is, reply with: "That looks like gibberish. Could you please rephrase?"
+STRICT INSTRUCTION: Check if the user query is gibberish. If it is, reply with JSON: {{"reply": "That looks like gibberish. Could you please rephrase?", "navigation": null}}
 
 The website has main sections: detailed in the user's scroll.
 Currently the user is in the '{context}' section.
@@ -157,7 +172,24 @@ Provide a helpful, polite, and brief response guiding them given the current sec
 """
 
     response = model.generate_content(prompt)
-    return jsonify({"reply": response.text})
+    
+    # Parse the response
+    try:
+        text_resp = response.text.strip()
+        # Clean potential markdown code blocks
+        if "```" in text_resp:
+            text_resp = re.sub(r"```(json)?|```", "", text_resp).strip()
+        
+        resp_json = json.loads(text_resp)
+        reply_text = resp_json.get("reply", "I'm not sure how to respond to that.")
+        nav_target = resp_json.get("navigation", None)
+    except Exception as e:
+        print(f"JSON Parse Error: {e}")
+        # Fallback if the LLM fails to produce valid JSON
+        reply_text = response.text
+        nav_target = None
+        
+    return jsonify({"reply": reply_text, "navigation": nav_target})
 
 if __name__ == "__main__":
     app.run(debug=True)

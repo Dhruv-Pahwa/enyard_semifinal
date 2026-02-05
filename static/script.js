@@ -97,7 +97,34 @@ function toggleChat() {
 }
 
 function clearChat() {
-    document.getElementById("chat-messages").innerHTML = "";
+    // Keep the welcome card but clear other messages?
+    // Or just clear everything and show welcome card logic.
+    // Simpler: Reset innerHTML to just the welcome card if it exists in source, or just reload page logic.
+    // Actually, since we modified layout.html, the welcome card is part of the initial HTML.
+    // So we should just clear OTHER messages and ensure welcome card is visible.
+
+    document.getElementById("chat-messages").innerHTML = `
+        <div id="welcome-card" class="welcome-card">
+            <h3>Hello!</h3>
+            <p>I am Echo! Your AI tutor. With my help you will:</p>
+            <ul class="welcome-features">
+                <li><span class="icon">✨</span> Get real-time insights and suggestions from your actions on virtual machines.</li>
+                <li><span class="icon">⏱️</span> Boost your learning speed and efficiency.</li>
+                <li><span class="icon">💡</span> Get a better understanding of room concepts and tasks.</li>
+            </ul>
+            <p class="welcome-footer">Stuck or want to chat? Let me know!</p>
+            <div class="welcome-buttons">
+                <button class="quick-btn" onclick="sendQuickMessage('I\\'m stuck')">→ I'm stuck</button>
+                <button class="quick-btn secondary" onclick="sendQuickMessage('Tell me more about yourself')">? Learn more about me</button>
+            </div>
+        </div>
+    `;
+}
+
+function sendQuickMessage(text) {
+    const input = document.getElementById("chatInput");
+    input.value = text;
+    sendChat();
 }
 
 function handleKeyPress(event) {
@@ -110,6 +137,12 @@ function sendChat() {
     const input = document.getElementById("chatInput");
     const msg = input.value;
     if (!msg.trim()) return;
+
+    // Hide welcome card
+    const welcomeCard = document.getElementById("welcome-card");
+    if (welcomeCard) {
+        welcomeCard.style.display = "none";
+    }
 
     const messages = document.getElementById("chat-messages");
     messages.innerHTML += `<div><b>You:</b> ${msg}</div>`;
@@ -130,18 +163,17 @@ function sendChat() {
             // Remove typing indicator
             removeTypingIndicator();
 
-            const reply = data.reply.trim();
-            if (reply.startsWith("NAVIGATE:")) {
-                const sectionId = reply.split(":")[1].trim();
+            const reply = data.reply;
+            if (reply) {
+                messages.innerHTML += `<div><b>AI:</b> ${reply}</div>`;
+            }
+
+            if (data.navigation) {
+                const sectionId = data.navigation;
                 const section = document.querySelector(sectionId);
                 if (section) {
-                    messages.innerHTML += `<div><b>AI:</b> Navigating to section...</div>`;
                     section.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    messages.innerHTML += `<div><b>AI:</b> I couldn't find that section.</div>`;
                 }
-            } else {
-                messages.innerHTML += `<div><b>AI:</b> ${reply}</div>`;
             }
             messages.scrollTop = messages.scrollHeight;
         })
