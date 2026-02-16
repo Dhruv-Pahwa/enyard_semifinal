@@ -18,6 +18,7 @@
             <li><a href="#questions">Questions</a></li>
             <li><a href="#contact">Contact</a></li>
             <li><a href="#social">Social Media</a></li>
+            <li><button id="theme-toggle" class="theme-btn">🌙</button></li>
         </ul>
     </nav>
 
@@ -31,29 +32,41 @@
 
     <div id="chat-panel">
         <div id="chat-header">
-            AI Assistant
-            <button id="clear-chat" onclick="clearChat()">Clear</button>
+            <div class="chat-header-left">
+                <div class="header-avatar">🤖</div>
+                <div class="chat-header-info">
+                    <span class="chat-name">Echo AI</span>
+                    <span class="chat-status">● Online</span>
+                </div>
+            </div>
+            <div class="chat-header-actions">
+                <button id="clear-chat" onclick="clearChat()">Clear</button>
+            </div>
         </div>
         <div id="chat-messages">
             <div id="welcome-card" class="welcome-card">
-                <h3>Hello!</h3>
+                <h3>Hello! <span class="emoji">👋</span></h3>
                 <p>I am Echo! Your AI tutor. With my help you will:</p>
                 <ul class="welcome-features">
-                    <li><span class="icon">✨</span> Get real-time insights and suggestions from your actions on virtual machines.</li>
+                    <li><span class="icon">✨</span> Get real-time insights and suggestions from your actions on virtual
+                        machines.</li>
                     <li><span class="icon">⏱️</span> Boost your learning speed and efficiency.</li>
                     <li><span class="icon">💡</span> Get a better understanding of room concepts and tasks.</li>
                 </ul>
                 <p class="welcome-footer">Stuck or want to chat? Let me know!</p>
                 <div class="welcome-buttons">
                     <button class="quick-btn" onclick="sendQuickMessage('I\'m stuck')">→ I'm stuck</button>
-                    <button class="quick-btn secondary" onclick="sendQuickMessage('Tell me more about yourself')">? Learn more about me</button>
+                    <button class="quick-btn secondary" onclick="sendQuickMessage('Tell me more about yourself')">
+                        Learn more about me?</button>
                 </div>
             </div>
         </div>
-        <div id="char-count">0/200</div>
-        <input type="text" id="chatInput" placeholder="Ask for a hint..." maxlength="200"
-            onkeypress="handleKeyPress(event)">
-        <button onclick="sendChat()">Send</button>
+        <div id="char-count">0/100</div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Type your message..." maxlength="100"
+                onkeypress="handleKeyPress(event)">
+            <button id="chat-send-btn" onclick="sendChat()" title="Send">➤</button>
+        </div>
     </div>
 
     <script src="/static/script.js"></script>
