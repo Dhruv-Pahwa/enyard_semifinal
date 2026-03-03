@@ -592,3 +592,247 @@ function updateCharCount() {
         countDiv.innerText = `${input.value.length}/100`;
     }
 }
+
+// ============================
+// CYBERSECURITY QUIZ
+// ============================
+
+let quizQuestions = [];
+let quizAnswers = {};
+let quizCurrentIndex = 0;
+let quizChartInstance = null;
+
+function startQuiz() {
+    fetch("/quiz")
+        .then(res => res.json())
+        .then(data => {
+            quizQuestions = data.questions;
+            quizAnswers = {};
+            quizCurrentIndex = 0;
+
+            document.getElementById("quiz-start-view").style.display = "none";
+            document.getElementById("quiz-question-view").style.display = "block";
+            document.getElementById("quiz-results-view").style.display = "none";
+            document.getElementById("quiz-total-num").textContent = quizQuestions.length;
+
+            showQuestion(0);
+        });
+}
+
+function showQuestion(index) {
+    const q = quizQuestions[index];
+    document.getElementById("quiz-current-num").textContent = index + 1;
+    document.getElementById("quiz-question-text").textContent = q.question;
+    document.getElementById("quiz-category-badge").textContent = q.category;
+
+    // Progress bar
+    const pct = ((index + 1) / quizQuestions.length) * 100;
+    document.getElementById("quiz-progress-fill").style.width = pct + "%";
+
+    // Render options
+    const optionsContainer = document.getElementById("quiz-options");
+    optionsContainer.innerHTML = "";
+    q.options.forEach((opt, i) => {
+        const btn = document.createElement("button");
+        btn.className = "quiz-option-btn";
+        if (quizAnswers[q.id] === i) {
+            btn.classList.add("selected");
+        }
+        btn.textContent = opt;
+        btn.onclick = () => selectQuizOption(q.id, i);
+        optionsContainer.appendChild(btn);
+    });
+
+    // Navigation buttons
+    document.getElementById("quiz-prev-btn").disabled = index === 0;
+
+    const isLast = index === quizQuestions.length - 1;
+    document.getElementById("quiz-next-btn").style.display = isLast ? "none" : "inline-flex";
+    document.getElementById("quiz-submit-btn").style.display = isLast ? "inline-flex" : "none";
+}
+
+function selectQuizOption(questionId, optionIndex) {
+    quizAnswers[questionId] = optionIndex;
+    // Re-render to show selected state
+    showQuestion(quizCurrentIndex);
+}
+
+function nextQuestion() {
+    if (quizCurrentIndex < quizQuestions.length - 1) {
+        quizCurrentIndex++;
+        showQuestion(quizCurrentIndex);
+    }
+}
+
+function prevQuestion() {
+    if (quizCurrentIndex > 0) {
+        quizCurrentIndex--;
+        showQuestion(quizCurrentIndex);
+    }
+}
+
+function submitQuiz() {
+    // Check if all questions are answered
+    const unanswered = quizQuestions.filter(q => quizAnswers[q.id] === undefined);
+    if (unanswered.length > 0) {
+        alert(`Please answer all questions. You have ${unanswered.length} unanswered question(s).`);
+        return;
+    }
+
+    fetch("/quiz/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answers: quizAnswers })
+    })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("quiz-question-view").style.display = "none";
+            document.getElementById("quiz-results-view").style.display = "block";
+            renderQuizResults(data);
+        });
+}
+
+function renderQuizResults(data) {
+    // Animated score counter
+    const scoreEl = document.getElementById("quiz-score-number");
+    const percentEl = document.getElementById("quiz-score-percent");
+    let count = 0;
+    const target = data.total_correct;
+    const interval = setInterval(() => {
+        count++;
+        scoreEl.textContent = count;
+        percentEl.textContent = Math.round((count / data.total_questions) * 100) + "%";
+        if (count >= target) clearInterval(interval);
+    }, 120);
+
+    if (target === 0) {
+        scoreEl.textContent = "0";
+        percentEl.textContent = "0%";
+    }
+
+    // Radar Chart
+    const ctx = document.getElementById("quizRadarChart").getContext("2d");
+    if (quizChartInstance) {
+        quizChartInstance.destroy();
+    }
+
+    const categories = Object.keys(data.categories);
+    const percentages = categories.map(c => data.categories[c].percentage);
+
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+
+    quizChartInstance = new Chart(ctx, {
+        type: "radar",
+        data: {
+            labels: categories,
+            datasets: [{
+                label: "Your Score (%)",
+                data: percentages,
+                backgroundColor: isDark ? "rgba(107, 63, 160, 0.25)" : "rgba(102, 126, 234, 0.2)",
+                borderColor: isDark ? "rgba(107, 63, 160, 0.9)" : "rgba(102, 126, 234, 0.8)",
+                borderWidth: 2.5,
+                pointBackgroundColor: isDark ? "#a78bfa" : "#667eea",
+                pointBorderColor: "#fff",
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 25,
+                        color: isDark ? "#aaa" : "#666",
+                        backdropColor: "transparent",
+                        font: { size: 11 }
+                    },
+                    grid: {
+                        color: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"
+                    },
+                    angleLines: {
+                        color: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"
+                    },
+                    pointLabels: {
+                        color: isDark ? "#ccc" : "#444",
+                        font: { size: 12, weight: "600" }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Analysis cards
+    const analysisDiv = document.getElementById("quiz-analysis");
+    analysisDiv.innerHTML = "";
+
+    if (data.strong_topics.length > 0) {
+        analysisDiv.innerHTML += `
+            <div class="quiz-analysis-card strong">
+                <h4>Strong Areas</h4>
+                <p>You've mastered these topics!</p>
+                <div class="quiz-topic-tags">${data.strong_topics.map(t => `<span class="tag strong-tag">${t}</span>`).join("")}</div>
+            </div>`;
+    }
+
+    if (data.focus_topics.length > 0) {
+        analysisDiv.innerHTML += `
+            <div class="quiz-analysis-card focus">
+                <h4>Good, But Review</h4>
+                <p>You're doing well, but a little more practice will make you solid!</p>
+                <div class="quiz-topic-tags">${data.focus_topics.map(t => `<span class="tag focus-tag">${t}</span>`).join("")}</div>
+            </div>`;
+    }
+
+    if (data.weak_topics.length > 0) {
+        analysisDiv.innerHTML += `
+            <div class="quiz-analysis-card weak">
+                <h4>Needs Improvement</h4>
+                <p>Focus on these topics to strengthen your cybersecurity knowledge.</p>
+                <div class="quiz-topic-tags">${data.weak_topics.map(t => `<span class="tag weak-tag">${t}</span>`).join("")}</div>
+            </div>`;
+    }
+
+    // Per-category breakdown
+    let breakdownHTML = `<div class="quiz-breakdown"><h4>Category Breakdown</h4>`;
+    for (const cat of categories) {
+        const s = data.categories[cat];
+        const barColor = s.percentage >= 100 ? "#10b981" : s.percentage >= 50 ? "#f59e0b" : "#ef4444";
+        breakdownHTML += `
+            <div class="quiz-breakdown-item">
+                <div class="quiz-breakdown-label">
+                    <span>${cat}</span>
+                    <span>${s.correct}/${s.total}</span>
+                </div>
+                <div class="quiz-breakdown-bar">
+                    <div class="quiz-breakdown-fill" style="width: ${s.percentage}%; background: ${barColor};"></div>
+                </div>
+            </div>`;
+    }
+    breakdownHTML += `</div>`;
+    analysisDiv.innerHTML += breakdownHTML;
+}
+
+function retakeQuiz() {
+    quizQuestions = [];
+    quizAnswers = {};
+    quizCurrentIndex = 0;
+    if (quizChartInstance) {
+        quizChartInstance.destroy();
+        quizChartInstance = null;
+    }
+    document.getElementById("quiz-results-view").style.display = "none";
+    document.getElementById("quiz-question-view").style.display = "none";
+    document.getElementById("quiz-start-view").style.display = "block";
+}
+

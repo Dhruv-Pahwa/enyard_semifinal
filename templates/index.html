@@ -48,6 +48,65 @@
     </div>
 </section>
 
+<section id="quiz" class="page-section">
+    <div class="card quiz-card">
+        <h2>Cybersecurity Knowledge Quiz</h2>
+
+        <!-- Start Screen -->
+        <div id="quiz-start-view">
+            <div class="quiz-intro">
+                <p class="quiz-intro-text">Test your cybersecurity knowledge across 5 key domains. Get a personalized
+                    performance chart and discover your strengths and weaknesses!</p>
+                <div class="quiz-domains">
+                    <span class="domain-tag">Network Security</span>
+                    <span class="domain-tag">Cryptography</span>
+                    <span class="domain-tag">Web Security</span>
+                    <span class="domain-tag">Social Engineering</span>
+                    <span class="domain-tag">Malware & Threats</span>
+                </div>
+                <button class="quiz-start-btn" onclick="startQuiz()">Start Quiz</button>
+            </div>
+        </div>
+
+        <!-- Quiz Questions View -->
+        <div id="quiz-question-view" style="display: none;">
+            <div class="quiz-progress-container">
+                <div class="quiz-progress-text"><span id="quiz-current-num">1</span> / <span
+                        id="quiz-total-num">10</span></div>
+                <div class="quiz-progress-bar">
+                    <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+                </div>
+                <div class="quiz-category-badge" id="quiz-category-badge">Network Security</div>
+            </div>
+            <p class="quiz-question-text" id="quiz-question-text"></p>
+            <div class="quiz-options" id="quiz-options"></div>
+            <div class="quiz-nav">
+                <button class="quiz-nav-btn" id="quiz-prev-btn" onclick="prevQuestion()" disabled>Previous</button>
+                <button class="quiz-nav-btn quiz-nav-next" id="quiz-next-btn" onclick="nextQuestion()">Next</button>
+                <button class="quiz-nav-btn quiz-submit-btn" id="quiz-submit-btn" onclick="submitQuiz()"
+                    style="display:none;">Submit Quiz</button>
+            </div>
+        </div>
+
+        <!-- Results View -->
+        <div id="quiz-results-view" style="display: none;">
+            <div class="quiz-score-header">
+                <h3>Your Results</h3>
+                <div class="quiz-score-circle">
+                    <span class="quiz-score-number" id="quiz-score-number">0</span>
+                    <span class="quiz-score-label">out of 10</span>
+                </div>
+                <p class="quiz-score-percent" id="quiz-score-percent">0%</p>
+            </div>
+            <div class="quiz-chart-container">
+                <canvas id="quizRadarChart"></canvas>
+            </div>
+            <div class="quiz-analysis" id="quiz-analysis"></div>
+            <button class="quiz-start-btn" onclick="retakeQuiz()" style="margin-top: 20px;">Retake Quiz</button>
+        </div>
+    </div>
+</section>
+
 <section id="contact" class="page-section">
     <div class="card intro-card">
         <h1>Contact Us</h1>

@@ -136,7 +136,7 @@ IMPORTANT: You must ALWAYS respond in valid JSON format.
 Your JSON must have THREE keys:
 1. "reply": A single combined text response addressing ALL parts of the user's message.
 2. "navigation": An ARRAY of section IDs to navigate to, or an empty array [] if no navigation is needed.
-   Valid sections are: #home, #about, #questions, #contact, #social.
+   Valid sections are: #home, #about, #questions, #quiz, #contact, #social.
 3. "theme": "dark" or "light" if the user requests a theme change, or null if not.
 
 HANDLING MULTIPLE COMMANDS:
@@ -254,6 +254,191 @@ Provide a helpful, polite, and brief response guiding them given the current sec
         theme_action = None
 
     return jsonify({"reply": reply_text, "navigation": nav_target, "theme": theme_action})
+
+# ============================
+# CYBERSECURITY QUIZ
+# ============================
+
+QUIZ_QUESTIONS = [
+    {
+        "id": 1,
+        "category": "Network Security",
+        "question": "What is the primary purpose of a firewall in network security?",
+        "options": [
+            "To speed up internet connection",
+            "To monitor and filter incoming and outgoing network traffic",
+            "To store backup data",
+            "To encrypt email communications"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 2,
+        "category": "Network Security",
+        "question": "What is the primary function of a VPN (Virtual Private Network)?",
+        "options": [
+            "To increase download speed",
+            "To block advertisements online",
+            "To create a secure, encrypted connection over a less secure network",
+            "To scan for viruses on your device"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 3,
+        "category": "Cryptography",
+        "question": "Which of the following best describes symmetric encryption?",
+        "options": [
+            "Uses two different keys — one public and one private",
+            "Uses the same key for both encryption and decryption",
+            "Does not require any key",
+            "Only works with digital signatures"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 4,
+        "category": "Cryptography",
+        "question": "What is the primary purpose of a hashing algorithm like SHA-256?",
+        "options": [
+            "To encrypt data so it can be decrypted later",
+            "To compress files for storage",
+            "To generate a fixed-size unique fingerprint of data for integrity verification",
+            "To establish a VPN connection"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 5,
+        "category": "Web Security",
+        "question": "What is Cross-Site Scripting (XSS)?",
+        "options": [
+            "A method to optimize website performance",
+            "An attack where malicious scripts are injected into trusted websites",
+            "A tool for testing website responsiveness",
+            "A browser extension for security"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 6,
+        "category": "Web Security",
+        "question": "Which of the following is the most effective way to prevent SQL injection attacks?",
+        "options": [
+            "Using longer passwords",
+            "Disabling JavaScript in the browser",
+            "Using parameterized queries / prepared statements",
+            "Installing an antivirus program"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 7,
+        "category": "Social Engineering",
+        "question": "What is a phishing attack?",
+        "options": [
+            "A technique to speed up network connections",
+            "A hardware-based attack on servers",
+            "A fraudulent attempt to obtain sensitive information by disguising as a trustworthy entity",
+            "A method to encrypt files on a network"
+        ],
+        "answer": 2
+    },
+    {
+        "id": 8,
+        "category": "Social Engineering",
+        "question": "In a 'pretexting' attack, what does the attacker primarily do?",
+        "options": [
+            "Sends mass spam emails",
+            "Creates a fabricated scenario to trick the victim into providing information",
+            "Uses brute force to crack passwords",
+            "Installs keyloggers on the victim's device"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 9,
+        "category": "Malware & Threats",
+        "question": "What does ransomware typically do to a victim's system?",
+        "options": [
+            "Speeds up the system by removing unused files",
+            "Encrypts the victim's files and demands payment for the decryption key",
+            "Monitors browsing habits for advertising purposes",
+            "Creates backup copies of important documents"
+        ],
+        "answer": 1
+    },
+    {
+        "id": 10,
+        "category": "Malware & Threats",
+        "question": "What is a 'zero-day' vulnerability?",
+        "options": [
+            "A vulnerability that has been patched on the same day it was found",
+            "A software flaw that is exploited before the vendor has released a fix",
+            "A virus that activates exactly at midnight",
+            "An outdated software version"
+        ],
+        "answer": 1
+    }
+]
+
+@app.route("/quiz")
+def get_quiz():
+    """Return quiz questions without exposing correct answers."""
+    questions_safe = []
+    for q in QUIZ_QUESTIONS:
+        questions_safe.append({
+            "id": q["id"],
+            "category": q["category"],
+            "question": q["question"],
+            "options": q["options"]
+        })
+    return jsonify({"questions": questions_safe})
+
+@app.route("/quiz/submit", methods=["POST"])
+def submit_quiz():
+    """Score the quiz and return per-category results."""
+    data = request.json
+    user_answers = data.get("answers", {})
+
+    categories = {}
+    total_correct = 0
+
+    for q in QUIZ_QUESTIONS:
+        cat = q["category"]
+        if cat not in categories:
+            categories[cat] = {"correct": 0, "total": 0}
+        categories[cat]["total"] += 1
+
+        user_ans = user_answers.get(str(q["id"]))
+        if user_ans is not None and int(user_ans) == q["answer"]:
+            categories[cat]["correct"] += 1
+            total_correct += 1
+
+    # Calculate percentages and classify strengths/weaknesses
+    strong_topics = []
+    weak_topics = []
+    focus_topics = []
+
+    for cat, scores in categories.items():
+        pct = (scores["correct"] / scores["total"]) * 100 if scores["total"] > 0 else 0
+        scores["percentage"] = pct
+        if pct >= 100:
+            strong_topics.append(cat)
+        elif pct >= 50:
+            focus_topics.append(cat)
+        else:
+            weak_topics.append(cat)
+
+    return jsonify({
+        "total_correct": total_correct,
+        "total_questions": len(QUIZ_QUESTIONS),
+        "percentage": round((total_correct / len(QUIZ_QUESTIONS)) * 100),
+        "categories": categories,
+        "strong_topics": strong_topics,
+        "weak_topics": weak_topics,
+        "focus_topics": focus_topics
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)
